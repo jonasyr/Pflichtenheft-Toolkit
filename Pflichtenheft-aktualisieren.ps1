@@ -19,6 +19,11 @@ param(
     # zaehlen dann Statuswerte statt Prioritaeten.
     [switch] $HeftModus,
 
+    # Heft-Modus: HTML-Fassung des zugehoerigen Pflichtenhefts. Ist sie angegeben,
+    # werden die Kennungen der Anforderungstabelle zu Links, die das Pflichtenheft
+    # in einem neuen Tab an genau dieser Anforderung oeffnen.
+    [string] $PflichtenheftHtml,
+
     # Wird von der .cmd gesetzt: bei Problemen darf nachgefragt werden statt
     # abzubrechen. Ohne diesen Schalter laeuft alles ohne Rueckfrage durch -
     # noetig fuer den Selbsttest und fuer Aufrufe im Stapel.
@@ -324,8 +329,33 @@ if ($lead) { $inhaltMd = $inhaltMd.Replace($lead, '') }
 
 $html = ($inhaltMd | ConvertFrom-Markdown).Html
 
-# 1) Kennungen in der ersten Spalte
-$html = [regex]::Replace($html, '<td>(/L[A-Z]{1,2}\d+(?:\.\d+)?/)</td>', '<td class="id">$1</td>')
+# 1) Kennungen in der ersten Spalte. Im Pflichtenheft bekommt die erste Nennung
+#    jeder Kennung einen Anker (id="LF20.1"); im Heft wird die Kennung zum Link
+#    auf diesen Anker. Der Link ist relativ, damit er auch in einer Kopie des
+#    Ordners stimmt.
+$ankerVergeben = [System.Collections.Generic.HashSet[string]]::new()
+$linkZiel = $null
+if ($HeftModus -and $PflichtenheftHtml) {
+    $heftOrdner = Split-Path -Parent ([IO.Path]::GetFullPath($AusgabePfad))
+    $relativ = [IO.Path]::GetRelativePath($heftOrdner, [IO.Path]::GetFullPath($PflichtenheftHtml)) -replace '\\', '/'
+    $linkZiel = @($relativ -split '/' | ForEach-Object {
+        if ($_ -in @('.', '..')) { $_ } else { [Uri]::EscapeDataString($_) }
+    }) -join '/'
+}
+$html = [regex]::Replace($html, '<td>(/(L[A-Z]{1,2}\d+(?:\.\d+)?)/)</td>', {
+    param($m)
+    $kennung = $m.Groups[1].Value
+    $anker   = $m.Groups[2].Value
+    if ($linkZiel) {
+        "<td class=`"id`"><a class=`"id-link`" href=`"$linkZiel#$anker`" target=`"_blank`" rel=`"noopener`" title=`"Im Pflichtenheft öffnen`">$kennung</a></td>"
+    }
+    elseif (-not $HeftModus -and $ankerVergeben.Add($anker)) {
+        "<td class=`"id`" id=`"$anker`">$kennung</td>"
+    }
+    else {
+        "<td class=`"id`">$kennung</td>"
+    }
+})
 $html = [regex]::Replace($html, '<td>(T-\d+)</td>', '<td class="id">$1</td>')
 
 # 2) Prioritaeten als Plaketten
@@ -425,6 +455,11 @@ $vorlage = @'
   tbody td { border-bottom:1px solid var(--linie); padding:0.62rem 0.7rem; vertical-align:top; }
   tbody tr:last-child td { border-bottom:none; }
   td.id { font-family:var(--mono); font-size:0.8rem; white-space:nowrap; font-weight:500; color:var(--karmin); }
+  td.id a.id-link { color:inherit; text-decoration:none; border-bottom:1px dotted currentColor; }
+  td.id a.id-link:hover, td.id a.id-link:focus-visible { border-bottom-style:solid; background:var(--karmin-weich); outline:none; }
+  td.id[id] { scroll-margin-top:30vh; }
+  tr:has(> td.id:target) > td { background:var(--karmin-weich); }
+  tr:has(> td.id:target) > td.id { box-shadow:inset 3px 0 0 var(--karmin); }
 
   code { font-family:var(--mono); font-size:0.86em; background:var(--flaeche-still); border:1px solid var(--linie); border-radius:4px; padding:0.06em 0.32em; }
   pre { background:var(--flaeche-still); border:1px solid var(--linie); border-left:3px solid var(--linie-stark); border-radius:0 6px 6px 0; padding:0.8rem 1rem; overflow-x:auto; font-family:var(--mono); font-size:0.82rem; line-height:1.55; }

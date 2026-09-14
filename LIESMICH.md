@@ -80,6 +80,8 @@ oder <https://aka.ms/powershell>. Danach das Fenster schließen und die Datei er
 
 `Abnahmehefte-aktualisieren.cmd` hält beides zusammen: Fehlende Anforderungen werden ins Heft eingetragen, vorhandene Statuswerte und sämtliche Prosa bleiben unangetastet, und ein Heft, das eine unbekannte Kennung oder einen unzulässigen Status enthält, wird abgewiesen — dann wird für dieses Heft nichts geschrieben und die Meldung nennt den Grund.
 
+**Vom Heft ins Pflichtenheft springen:** In der HTML eines Abnahmehefts ist jede Kennung ein Link. Ein Klick öffnet die HTML des Pflichtenhefts in einem neuen Tab, springt zu genau dieser Anforderung und hebt die Zeile hervor. Dafür muss die HTML des Pflichtenhefts erzeugt sein und im selben Verhältnis zum Heftordner liegen wie beim Erzeugen — beim Weitergeben also den ganzen Ordner mitgeben.
+
 Beide Dokumente beginnen mit einer **Lesehilfe**: Das Pflichtenheft erklärt darin die Kennungen (`/LF…/`, `/LZ…/` und so fort), die Prioritäten und die Nachweisarten; das Abnahmeheft erklärt die fünf Statuswerte. Damit kann auch jemand mitlesen, der das Dokument zum ersten Mal sieht.
 
 Die Prosa der Hefte bleibt Handarbeit. Automatisch gekürzter Fachtext ist kein Abnahmetext, sondern derselbe Fachtext mit weniger Wörtern.

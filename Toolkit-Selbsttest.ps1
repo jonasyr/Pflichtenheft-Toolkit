@@ -552,6 +552,21 @@ Pruefe 'C12 Logo beim Dokument sticht das beim Werkzeug' {
     if ($h -notmatch '<img class="marke"') { return 'Kein Logo eingebettet' }
 }
 
+Pruefe 'C13 Kennungen im Heft verlinken auf die Stelle im Pflichtenheft' {
+    $o = Neuer-Ordner 'c13'; Werkzeuge-Nach $o
+    Neues-Pflichtenheft -Pfad (Join-Path $o 'Pflichtenheft-Pruefling.md')
+    Starte (Join-Path $o 'Pflichtenheft-aktualisieren.ps1') @() | Out-Null
+    $r = Starte (Join-Path $o 'Abnahmehefte-aktualisieren.ps1') @()
+    if ($r.Code -ne 0) { return "Rueckgabewert $($r.Code): $($r.Ausgabe)" }
+    $ph   = Get-Content (Join-Path $o 'Pflichtenheft-Pruefling.html') -Raw -Encoding utf8
+    $heft = Get-Content (Join-Path $o 'abnahme\Pruefling_V1.0.html') -Raw -Encoding utf8
+    if ($ph -notmatch '<td class="id" id="LZ10">/LZ10/</td>')   { return 'Anker im Pflichtenheft fehlt' }
+    if (([regex]::Matches($ph, 'id="LZ10"')).Count -ne 1)       { return 'Anker nicht eindeutig (Testfall-Spalte doppelt verankert)' }
+    if ($heft -notmatch 'href="\.\./Pflichtenheft-Pruefling\.html#LZ10"') { return 'Link im Heft fehlt oder zeigt falsch' }
+    if ($heft -notmatch 'href="[^"]+#LZ10" target="_blank"')   { return 'Link oeffnet keinen neuen Tab' }
+    if ($heft -match 'id="LZ10"')                              { return 'Heft vergibt eigene Anker' }
+}
+
 Pruefe 'C9 Vorspann: Kopfangabe wird uebersprungen, Auszeichnung gerendert' {
     $o = Neuer-Ordner 'c9'; Werkzeuge-Nach $o
     Neues-Pflichtenheft -Pfad (Join-Path $o 'Pflichtenheft-Pruefling.md')

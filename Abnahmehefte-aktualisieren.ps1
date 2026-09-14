@@ -375,7 +375,9 @@ foreach ($v in $versionen) {
 
     $ausgabe = [IO.Path]::ChangeExtension($heftPfad, '.html')
     try {
-        & $Renderer -MarkdownPfad $heftPfad -AusgabePfad $ausgabe -HeftModus -NichtOeffnen | Out-Null
+        # Die Kennungen im Heft verlinken auf die HTML-Fassung des Pflichtenhefts.
+        $pflichtenheftHtml = [IO.Path]::ChangeExtension($PflichtenheftPfad, '.html')
+        & $Renderer -MarkdownPfad $heftPfad -AusgabePfad $ausgabe -HeftModus -PflichtenheftHtml $pflichtenheftHtml -NichtOeffnen | Out-Null
         $teile = @()
         if ($istNeu)            { $teile += 'neu angelegt' }
         if ($ergaenzt)          { $teile += "$ergaenzt Zeile(n) ergaenzt" }
